@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración</title>
+    <style>
+        /* --- Estilos CSS (Consistentes con las otras páginas) --- */
+        :root {
+            --bg-color: #F8F7F3;
+            --text-color: #333;
+            --primary-accent: #EAD7F0;
+            --secondary-accent: #C8A2C8;
+            --border-color: #DDD;
+            --placeholder-color: #999;
+            --card-bg: #FFFFFF;
+            --completed-color: #A8D5BA;
+            --incompleted-color: #F4BABA;
+            --hover-bg: #EFEFEF;
+            --icon-color: #555;
+            --icon-active-color: #8A2BE2; /* Violeta */
+            --danger-color: #dc3545; /* Rojo para borrar */
+            --danger-hover-bg: #bb2d3b;
+        }
+
+        body.dark-mode {
+            --bg-color: #2C2C2C;
+            --text-color: #E0E0E0;
+            --primary-accent: #4A3F5E;
+            --secondary-accent: #7A6A9B;
+            --border-color: #555;
+            --placeholder-color: #888;
+            --card-bg: #3B3B3B;
+            --completed-color: #4A7C59;
+            --incompleted-color: #A75C5C;
+            --hover-bg: #4F4F4F;
+            --icon-color: #BBB;
+            --icon-active-color: #C8A2C8;
+            --danger-color: #f85161;
+            --danger-hover-bg: #dc3545;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+            padding: 15px;
+        }
+
+        .app-container {
+            max-width: 800px; /* Más estrecho para página de configuración */
+            margin: 20px auto; /* Añadido margen superior */
+            background-color: var(--card-bg);
+            padding: 25px 30px; /* Más padding */
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+        body.dark-mode .app-container { box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1); }
+
+        header {
+            margin-bottom: 25px; padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-accent);
+            text-align: center;
+        }
+
+        .main-title {
+            font-size: 2.5em; font-weight: bold; color: var(--secondary-accent);
+        }
+
+        /* Navegación */
+        nav {
+             margin-bottom: 30px;
+             padding-bottom: 20px;
+             border-bottom: 1px solid var(--border-color);
+             text-align: center;
+        }
+        nav a {
+            margin: 0 15px; color: var(--secondary-accent);
+            text-decoration: none; font-weight: 500;
+        }
+        nav a:hover { text-decoration: underline; }
+
+        /* Contenido de Configuración */
+        .settings-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: var(--primary-accent); /* Fondo lila claro */
+            border-radius: 8px;
+        }
+         body.dark-mode .settings-section {
+             background-color: var(--primary-accent);
+         }
+
+
+        .settings-title {
+            font-size: 1.4em; font-weight: 600; margin-bottom: 20px;
+            color: var(--icon-color);
+        }
+         body.dark-mode .settings-title { color: var(--text-color); }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--secondary-accent);
+        }
+         .setting-item:last-child {
+             border-bottom: none;
+             margin-bottom: 0;
+         }
+
+        .setting-item label {
+            font-size: 1.1em;
+            flex-grow: 1;
+            margin-right: 15px;
+        }
+
+        /* Estilos para el Toggle Switch del Tema */
+        .theme-switch-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .theme-switch {
+            display: inline-block;
+            height: 26px; /* Altura ajustada */
+            position: relative;
+            width: 50px; /* Ancho ajustado */
+        }
+        .theme-switch input { display:none; } /* Ocultar checkbox real */
+
+        .slider { /* El fondo del switch */
+            background-color: #ccc;
+            bottom: 0; cursor: pointer; left: 0;
+            position: absolute; right: 0; top: 0;
+            transition: .4s;
+            border-radius: 26px; /* Redondeado */
+        }
+
+        .slider:before { /* El círculo que se mueve */
+            background-color: white;
+            bottom: 3px; /* Ajuste vertical */
+            content: "";
+            height: 20px; /* Tamaño del círculo */
+            left: 3px; /* Ajuste horizontal */
+            position: absolute;
+            transition: .4s;
+            width: 20px; /* Tamaño del círculo */
+            border-radius: 50%;
+        }
+
+        /* Cuando el input está checked (Dark Mode) */
+        input:checked + .slider {
+            background-color: var(--icon-active-color); /* Color violeta */
+        }
+        input:checked + .slider:before {
+            transform: translateX(24px); /* Mover el círculo a la derecha */
+        }
+
+         /* Estilos para botones de acción */
+         .action-button {
+             padding: 10px 20px;
+             border: none;
+             border-radius: 5px;
+             cursor: pointer;
+             font-size: 1em;
+             font-weight: 500;
+             transition: background-color 0.2s, color 0.2s;
+             margin-left: 10px; /* Espacio si hay varios botones */
+         }
+
+         .export-button {
+             background-color: var(--secondary-accent);
+             color: var(--bg-color); /* Texto claro */
+         }
+         .export-button:hover {
+             background-color: var(--icon-active-color);
+         }
+          body.dark-mode .export-button {
+              color: var(--text-color); /* Texto oscuro en dark */
+          }
+
+         .delete-button {
+             background-color: var(--danger-color);
+             color: white;
+         }
+         .delete-button:hover {
+             background-color: var(--danger-hover-bg);
+         }
+
+         .data-actions {
+             text-align: right; /* Alinea botones a la derecha */
+             margin-top: 20px;
+         }
+          .delete-warning {
+             color: var(--danger-color);
+             font-size: 0.9em;
+             margin-top: 10px;
+             display: block; /* Asegura que ocupe su línea */
+         }
+
+
+        /* Responsividad */
+        @media (max-width: 600px) {
+            .main-title { font-size: 2em; }
+            .app-container { padding: 20px; }
+            .setting-item { flex-direction: column; align-items: flex-start; }
+            .theme-switch-wrapper { margin-top: 10px; }
+             .data-actions { text-align: center; }
+             .action-button { display: block; width: 100%; margin: 10px 0 0 0; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1 class="main-title">Configuración</h1>
+        </header>
+
+        <nav>
+             <a href="daily.html">Diario</a>
+             <a href="weekly.html">Semanal</a>
+             <a href="stats.html">Análisis</a>
+             <a href="#">Configuración</a> <!-- Activo -->
+        </nav>
+
+        <main>
+            <section class="settings-section">
+                <h2 class="settings-title">Apariencia</h2>
+                <div class="setting-item">
+                    <label for="theme-toggle">Modo Oscuro</label>
+                    <div class="theme-switch-wrapper">
+                        <label class="theme-switch" for="theme-toggle">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <!-- Aquí se podrían añadir más opciones de apariencia en el futuro -->
+            </section>
+
+            <section class="settings-section">
+                <h2 class="settings-title">Gestión de Datos</h2>
+                <div class="setting-item">
+                    <label>Exportar Datos</label>
+                    <button id="export-data-button" class="action-button export-button">Exportar a JSON</button>
+                </div>
+                 <div class="setting-item">
+                    <label>Borrar Datos</label>
+                    <div class="data-actions">
+                         <button id="delete-data-button" class="action-button delete-button">Borrar Todos los Datos</button>
+                         <span class="delete-warning">¡Atención! Esta acción es irreversible.</span>
+                    </div>
+                 </div>
+                 <!-- Aquí se podrían añadir más opciones de datos -->
+            </section>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const themeToggle = document.getElementById('theme-toggle');
+        const exportButton = document.getElementById('export-data-button');
+        const deleteButton = document.getElementById('delete-data-button');
+
+        // --- Inicialización ---
+        loadThemeAndSetToggle(); // Carga tema y ajusta el switch
+        setupEventListeners();
+
+        // --- Funciones ---
+
+        function setupEventListeners() {
+            themeToggle.addEventListener('change', handleThemeToggle);
+            exportButton.addEventListener('click', handleExportData);
+            deleteButton.addEventListener('click', handleDeleteData);
+        }
+
+        // --- Gestión del Tema ---
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+        }
+
+        function loadThemeAndSetToggle() {
+            const savedTheme = localStorage.getItem('theme') || 'light'; // Default to light
+            applyTheme(savedTheme);
+            // Sincronizar el estado del switch con el tema cargado
+            themeToggle.checked = (savedTheme === 'dark');
+        }
+
+        function handleThemeToggle() {
+            const newTheme = themeToggle.checked ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme); // Guardar preferencia
+            applyTheme(newTheme); // Aplicar cambio visual inmediato
+        }
+
+        // --- Gestión de Datos (Ejemplos) ---
+
+        function handleExportData() {
+            console.log("Intentando exportar datos...");
+            const dataToExport = {};
+            let itemCount = 0;
+
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                // Incluir solo datos de la app (daily, weekly) y tema
+                if (key.startsWith('daily_') || key.startsWith('weekly_') || key === 'theme') {
+                    try {
+                        dataToExport[key] = JSON.parse(localStorage.getItem(key));
+                    } catch (e) {
+                        // Si no es JSON (como 'theme'), guardar como string
+                        dataToExport[key] = localStorage.getItem(key);
+                    }
+                    itemCount++;
+                }
+            }
+
+            if (itemCount === 0) {
+                 alert("No hay datos de la aplicación para exportar.");
+                 return;
+            }
+
+             // Crear blob y enlace de descarga
+             try {
+                 const jsonString = JSON.stringify(dataToExport, null, 2); // Pretty print JSON
+                 const blob = new Blob([jsonString], { type: 'application/json' });
+                 const url = URL.createObjectURL(blob);
+                 const link = document.createElement('a');
+                 link.href = url;
+                 const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+                 link.download = `planificador_datos_${today}.json`; // Nombre del archivo
+                 document.body.appendChild(link); // Necesario para Firefox
+                 link.click();
+                 document.body.removeChild(link); // Limpiar
+                 URL.revokeObjectURL(url); // Liberar memoria
+                 console.log("Datos exportados.");
+             } catch (e) {
+                 console.error("Error al crear o descargar el archivo JSON:", e);
+                 alert("Error al exportar los datos. Revisa la consola para más detalles.");
+             }
+        }
+
+        function handleDeleteData() {
+             const confirmation = prompt("¡Acción irreversible!\nEsto borrará TODOS los datos de planificación (diarios, semanales) guardados en este navegador.\nEscribe 'BORRAR' para confirmar:");
+
+             if (confirmation === "BORRAR") {
+                 console.log("Borrando datos...");
+                 const keysToDelete = [];
+                 for (let i = 0; i < localStorage.length; i++) {
+                     const key = localStorage.key(i);
+                     if (key.startsWith('daily_') || key.startsWith('weekly_')) {
+                         keysToDelete.push(key);
+                     }
+                 }
+
+                 keysToDelete.forEach(key => {
+                     localStorage.removeItem(key);
+                     console.log(`Eliminado: ${key}`);
+                 });
+
+                 // Opcional: borrar también el tema o resetearlo
+                 // localStorage.removeItem('theme');
+
+                 alert("Todos los datos de planificación han sido borrados.");
+                 // Opcional: redirigir a la página principal o recargar
+                 // window.location.reload();
+             } else {
+                 alert("Borrado cancelado.");
+             }
+        }
+
+        // Cargar tema inicial (solo necesario si no se llama desde otra función como loadThemeAndSetToggle)
+        // loadThemeAndSetToggle(); // Asegura que el tema se aplique al cargar la página
+
+    });
+    </script>
+
+</body>
+</html>

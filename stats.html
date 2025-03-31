@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis y Rendimiento</title>
+    <!-- Incluir Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* --- Estilos CSS (Consistentes con las otras páginas) --- */
+        :root {
+            --bg-color: #F8F7F3;
+            --text-color: #333;
+            --primary-accent: #EAD7F0;
+            --secondary-accent: #C8A2C8;
+            --border-color: #DDD;
+            --placeholder-color: #999;
+            --card-bg: #FFFFFF;
+            --completed-color: #A8D5BA; /* Verde claro */
+            --incompleted-color: #F4BABA; /* Rojo claro */
+            --hover-bg: #EFEFEF;
+            --icon-color: #555;
+            --icon-active-color: #8A2BE2; /* Violeta */
+
+            /* Colores para gráficos (pueden ajustarse) */
+            --chart-mood-feliz: #FFD700; /* Oro */
+            --chart-mood-contento: #90EE90; /* Verde claro */
+            --chart-mood-neutral: #ADD8E6; /* Azul claro */
+            --chart-mood-triste: #A9A9A9; /* Gris oscuro */
+            --chart-mood-enojado: #FF6347; /* Tomate */
+            --chart-completed: #4CAF50; /* Verde */
+            --chart-incompleted: #F44336; /* Rojo */
+            --chart-pending: #FFC107; /* Amarillo */
+        }
+
+        body.dark-mode {
+            --bg-color: #2C2C2C;
+            --text-color: #E0E0E0;
+            --primary-accent: #4A3F5E;
+            --secondary-accent: #7A6A9B;
+            --border-color: #555;
+            --placeholder-color: #888;
+            --card-bg: #3B3B3B;
+            --completed-color: #4A7C59; /* Verde oscuro */
+            --incompleted-color: #A75C5C; /* Rojo oscuro */
+            --hover-bg: #4F4F4F;
+            --icon-color: #BBB;
+            --icon-active-color: #C8A2C8;
+
+            /* Colores oscuros para gráficos */
+            --chart-mood-feliz: #E6C300;
+            --chart-mood-contento: #70C870;
+            --chart-mood-neutral: #87CEEB;
+            --chart-mood-triste: #8C8C8C;
+            --chart-mood-enojado: #E04B35;
+            --chart-completed: #66BB6A;
+            --chart-incompleted: #EF5350;
+            --chart-pending: #FFCA28;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+            padding: 15px;
+        }
+
+        .app-container {
+            max-width: 1200px; margin: 0 auto; background-color: var(--card-bg);
+            padding: 20px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+        body.dark-mode .app-container { box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1); }
+
+        header { /* Simplificado para esta página */
+            margin-bottom: 25px; padding-bottom: 15px;
+            border-bottom: 2px solid var(--primary-accent);
+        }
+
+        .main-title {
+            font-size: 2.5em; font-weight: bold; color: var(--secondary-accent); text-align: center;
+        }
+
+        /* Navegación */
+        nav {
+             margin-bottom: 30px; /* Espacio antes del contenido */
+             padding-bottom: 20px;
+             border-bottom: 1px solid var(--border-color);
+             text-align: center;
+        }
+        nav a {
+            margin: 0 15px; color: var(--secondary-accent);
+            text-decoration: none; font-weight: 500;
+        }
+        nav a:hover { text-decoration: underline; }
+
+        /* Contenido de estadísticas */
+        .stats-content {
+            display: grid;
+            gap: 30px;
+            grid-template-columns: 1fr; /* Una columna por defecto */
+        }
+
+         /* Estilos para selectores de periodo (si se añaden) */
+         .period-selector {
+             text-align: center;
+             margin-bottom: 20px;
+         }
+         .period-selector label { margin-right: 10px; }
+         .period-selector select {
+             padding: 8px; border-radius: 4px;
+             border: 1px solid var(--border-color);
+             background-color: var(--bg-color);
+             color: var(--text-color);
+         }
+         body.dark-mode .period-selector select { background-color: var(--card-bg); }
+
+
+        .chart-container {
+            background-color: var(--primary-accent); /* Fondo lila claro para el contenedor */
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 5px rgba(0,0,0,0.05);
+        }
+        body.dark-mode .chart-container {
+             background-color: var(--primary-accent); /* Mantener el lila o ajustar si se ve mal */
+        }
+
+
+        .chart-title {
+            font-size: 1.3em; font-weight: 600; margin-bottom: 15px;
+            text-align: center; color: var(--icon-color);
+        }
+         body.dark-mode .chart-title { color: var(--text-color); }
+
+        .chart-wrapper {
+             /* Contenedor directo del canvas para controlar tamaño si es necesario */
+             position: relative;
+             /* Altura mínima para evitar colapso si no hay datos */
+             min-height: 150px;
+        }
+
+
+        /* Indicador de Rendimiento */
+        .performance-summary {
+            padding: 15px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px; /* Espacio sobre el resumen */
+            border: 2px solid; /* Borde usará el color definido abajo */
+        }
+        .performance-summary.high {
+            background-color: var(--completed-color); /* Fondo verde claro */
+            border-color: var(--chart-completed); /* Borde verde */
+            color: #145214; /* Texto verde oscuro */
+        }
+        body.dark-mode .performance-summary.high {
+             background-color: var(--completed-color);
+             border-color: var(--chart-completed);
+             color: #E0F2E0; /* Texto verde muy claro */
+        }
+
+        .performance-summary.medium {
+             background-color: #FFF3CD; /* Amarillo claro */
+             border-color: var(--chart-pending); /* Borde amarillo */
+             color: #664D00; /* Texto ámbar oscuro */
+        }
+         body.dark-mode .performance-summary.medium {
+             background-color: #664d003d;
+             border-color: var(--chart-pending);
+             color: #FFEAA1; /* Texto amarillo claro */
+         }
+
+        .performance-summary.low {
+            background-color: var(--incompleted-color); /* Fondo rojo claro */
+            border-color: var(--chart-incompleted); /* Borde rojo */
+            color: #6A1B1B; /* Texto rojo oscuro */
+        }
+        body.dark-mode .performance-summary.low {
+             background-color: var(--incompleted-color);
+             border-color: var(--chart-incompleted);
+             color: #F9D5D5; /* Texto rojo muy claro */
+        }
+
+         .no-data-message {
+             text-align: center;
+             padding: 20px;
+             color: var(--placeholder-color);
+             font-style: italic;
+         }
+
+
+        /* Responsividad */
+         @media (min-width: 992px) { /* Pantallas más grandes */
+              .stats-content {
+                  /* Dos columnas para los gráficos */
+                  grid-template-columns: 1fr 1fr;
+              }
+              /* Hacer que el resumen ocupe ambas columnas si es necesario */
+             .performance-summary-container {
+                 grid-column: 1 / -1; /* Span across all columns */
+             }
+         }
+
+         @media (max-width: 768px) {
+            .main-title { font-size: 2em; }
+         }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1 class="main-title">Análisis y Rendimiento</h1>
+        </header>
+
+        <nav>
+             <a href="daily.html">Diario</a>
+             <a href="weekly.html">Semanal</a>
+             <a href="#">Análisis</a> <!-- Activo -->
+             <a href="settings.html">Configuración</a>
+        </nav>
+
+         <!-- Selector de Periodo (Ejemplo: Últimos 7 días / Últimas 4 semanas) -->
+         <div class="period-selector">
+             <label for="stats-period">Mostrar datos para:</label>
+             <select id="stats-period">
+                 <option value="last7days" selected>Últimos 7 Días</option>
+                 <option value="last4weeks">Últimas 4 Semanas</option>
+                 <option value="thisMonth">Este Mes</option>
+                 <!-- <option value="allTime">Todo el Historial</option> -->
+             </select>
+         </div>
+
+
+        <main class="stats-content" id="stats-main-content">
+            <!-- Los contenedores de gráficos se añadirán aquí si hay datos -->
+             <div id="performance-summary-container" class="performance-summary-container">
+                 <!-- El resumen de rendimiento se insertará aquí -->
+             </div>
+        </main>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const statsContent = document.getElementById('stats-main-content');
+        const performanceContainer = document.getElementById('performance-summary-container');
+        const periodSelector = document.getElementById('stats-period');
+
+        let moodChartInstance = null;
+        let dailyCompletionChartInstance = null;
+        let weeklyGoalChartInstance = null;
+        let weeklyPriorityChartInstance = null;
+
+        // --- Inicialización ---
+        loadTheme();
+        renderStats(); // Render inicial
+        setupEventListeners();
+
+        // --- Funciones ---
+
+        function setupEventListeners() {
+            periodSelector.addEventListener('change', renderStats);
+        }
+
+        // Obtener datos de localStorage y filtrar por periodo
+        function getFilteredData(period) {
+            const allData = { daily: {}, weekly: {} };
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalizar a inicio del día
+            let startDate, endDate;
+
+             // Calcular fechas de inicio y fin según el periodo
+             switch (period) {
+                case 'last7days':
+                    endDate = new Date(today); // Hasta el día de *ayer* incluido
+                    endDate.setDate(endDate.getDate() -1); // Ayer
+                    startDate = new Date(endDate);
+                    startDate.setDate(startDate.getDate() - 6); // 7 días en total
+                    break;
+                case 'last4weeks':
+                     endDate = getMonday(today); // Lunes de esta semana
+                     endDate.setDate(endDate.getDate() -1); // Domingo pasado
+                     startDate = new Date(endDate);
+                     startDate.setDate(startDate.getDate() - (4 * 7) + 1); // Lunes de hace 4 semanas
+                    break;
+                 case 'thisMonth':
+                     endDate = new Date(today); // Hasta ayer
+                     endDate.setDate(endDate.getDate() -1);
+                     startDate = new Date(today.getFullYear(), today.getMonth(), 1); // Primer día del mes actual
+                     break;
+                 default: // Por defecto, últimos 7 días
+                    endDate = new Date(today);
+                    endDate.setDate(endDate.getDate() -1);
+                    startDate = new Date(endDate);
+                    startDate.setDate(startDate.getDate() - 6);
+             }
+
+            // Iterar sobre localStorage
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                let dataDate;
+
+                if (key.startsWith('daily_')) {
+                    const dateString = key.substring(6); // YYYY-MM-DD
+                    // Crear fecha UTC para evitar problemas de zona horaria al comparar solo la fecha
+                    const parts = dateString.split('-');
+                    dataDate = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+
+
+                    // Filtrar: fecha dentro del rango y *antes* de hoy
+                    if (dataDate >= startDate && dataDate <= endDate) {
+                        try {
+                            allData.daily[key] = JSON.parse(localStorage.getItem(key));
+                        } catch (e) { console.error(`Error parsing daily data for key ${key}:`, e); }
+                    }
+                } else if (key.startsWith('weekly_')) {
+                    const weekString = key.substring(7); // YYYY-Www
+                    const year = parseInt(weekString.substring(0, 4));
+                    const weekNum = parseInt(weekString.substring(6));
+                    // Obtener el Lunes de esa semana para comparar
+                    dataDate = getMondayOfWeekNumber(year, weekNum);
+
+                    // Filtrar: El *inicio* de la semana debe estar dentro del rango o superponerse
+                    // y la semana debe haber terminado (su Lunes es anterior al Lunes de *esta* semana)
+                    const thisWeekMonday = getMonday(new Date());
+                    if (dataDate >= startDate && dataDate <= endDate && dataDate < thisWeekMonday) {
+                         try {
+                            allData.weekly[key] = JSON.parse(localStorage.getItem(key));
+                         } catch (e) { console.error(`Error parsing weekly data for key ${key}:`, e); }
+                    }
+                }
+            }
+             // console.log("Filtered Data:", allData, "Range:", startDate, "to", endDate);
+            return allData;
+        }
+
+         // --- Funciones auxiliares de fecha ---
+         function getMonday(d) { // Copiada de weekly.html
+              d = new Date(d);
+              const day = d.getDay();
+              const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+              d.setHours(0, 0, 0, 0); // Normalizar
+              return new Date(d.setDate(diff));
+          }
+
+         function getMondayOfWeekNumber(year, weekNum) {
+              const januaryFirst = new Date(Date.UTC(year, 0, 1));
+              const daysOffset = (weekNum - 1) * 7; // Days from Jan 1st
+              // Find the first day of the year
+              const firstDayOfYear = januaryFirst.getUTCDay(); // 0=Sun, 1=Mon...
+              // Calculate days to first ISO week Monday
+              let daysToFirstMonday = (8 - firstDayOfYear) % 7;
+              if (firstDayOfYear === 0) daysToFirstMonday = 1; // Sunday case
+              if (firstDayOfYear > 4) daysToFirstMonday = daysToFirstMonday + 7; // If Jan 1st is Fri, Sat, Sun
+
+              const targetDate = new Date(januaryFirst);
+              targetDate.setUTCDate(januaryFirst.getUTCDate() - (firstDayOfYear - 1) + daysOffset); // Approximate, adjust if needed
+
+             // Refined calculation based on ISO 8601 standard:
+             const simple = new Date(Date.UTC(year, 0, 1 + (weekNum - 1) * 7));
+             const dayOfWeek = simple.getUTCDay(); // 0=Sun, 1=Mon...
+             const isoWeekStart = simple;
+             isoWeekStart.setUTCDate(simple.getUTCDate() - dayOfWeek + 1); // Set to Monday
+              if (dayOfWeek === 0) { // Adjust if Sunday
+                  isoWeekStart.setUTCDate(simple.getUTCDate() - 6);
+             }
+             isoWeekStart.setUTCHours(0,0,0,0);
+             return isoWeekStart;
+          }
+
+
+        // Procesa datos y renderiza todos los gráficos y resumen
+        function renderStats() {
+            const selectedPeriod = periodSelector.value;
+            const data = getFilteredData(selectedPeriod);
+
+            // Limpiar contenido anterior
+            statsContent.innerHTML = ''; // Limpia gráficos anteriores
+            performanceContainer.innerHTML = ''; // Limpia resumen anterior
+            destroyCharts(); // Destruir instancias Chart.js
+
+             const hasDailyData = Object.keys(data.daily).length > 0;
+             const hasWeeklyData = Object.keys(data.weekly).length > 0;
+
+             if (!hasDailyData && !hasWeeklyData) {
+                 statsContent.innerHTML = '<p class="no-data-message">No hay suficientes datos históricos para mostrar análisis en el periodo seleccionado.</p>';
+                 return;
+             }
+
+             let overallScore = 0;
+             let scoreFactors = 0;
+
+
+            // 1. Gráfico de Estado de Ánimo (Diario)
+            if (hasDailyData) {
+                 const moodCounts = { feliz: 0, contento: 0, neutral: 0, triste: 0, enojado: 0 };
+                 let validMoodDays = 0;
+                 Object.values(data.daily).forEach(dayData => {
+                     if (dayData.mood) {
+                         moodCounts[dayData.mood]++;
+                         validMoodDays++;
+                     }
+                 });
+                 if (validMoodDays > 0) {
+                      createChartContainer('moodChart', 'Distribución del Estado de Ánimo');
+                      moodChartInstance = createMoodChart(moodCounts);
+                      // Contribuir al score (ej. feliz/contento = positivo)
+                      let positiveMoods = moodCounts.feliz + moodCounts.contento;
+                      overallScore += (positiveMoods / validMoodDays) * 100; // Ponderado
+                      scoreFactors++;
+                 }
+            }
+
+             // 2. Gráfico de Tareas y Prioridades Completadas (Diario)
+             if (hasDailyData) {
+                 let totalTasks = 0, completedTasks = 0;
+                 let totalPriorities = 0, completedPriorities = 0;
+                 Object.values(data.daily).forEach(dayData => {
+                     if (dayData.tasks) {
+                         totalTasks += dayData.tasks.length;
+                         completedTasks += dayData.tasks.filter(t => t.completed).length;
+                     }
+                      if (dayData.priorities) {
+                         const validPriorities = dayData.priorities.filter(p => p.text && p.text.trim() !== '');
+                         totalPriorities += validPriorities.length;
+                         completedPriorities += validPriorities.filter(p => p.completed).length;
+                     }
+                 });
+
+                 if (totalTasks > 0 || totalPriorities > 0) {
+                     createChartContainer('dailyCompletionChart', 'Cumplimiento Diario (Tareas y Prioridades)');
+                     dailyCompletionChartInstance = createCompletionChart(
+                         'dailyCompletionChart',
+                         ['Tareas', 'Prioridades'],
+                         [completedTasks, completedPriorities],
+                         [totalTasks, totalPriorities]
+                     );
+                      // Contribuir al score
+                      if (totalTasks > 0) {
+                          overallScore += (completedTasks / totalTasks) * 100;
+                          scoreFactors++;
+                      }
+                      if (totalPriorities > 0) {
+                          overallScore += (completedPriorities / totalPriorities) * 100;
+                           scoreFactors++;
+                      }
+                 }
+             }
+
+             // 3. Gráfico de Metas Semanales Completadas
+             if (hasWeeklyData) {
+                  let totalGoals = 0, completedGoals = 0;
+                  Object.values(data.weekly).forEach(weekData => {
+                      if (weekData.dailyGoals) {
+                          Object.values(weekData.dailyGoals).forEach(dayGoals => {
+                             const validGoals = dayGoals.filter(g => g.text && g.text.trim() !== '');
+                              totalGoals += validGoals.length;
+                              completedGoals += validGoals.filter(g => g.completed).length;
+                          });
+                      }
+                  });
+
+                  if (totalGoals > 0) {
+                      createChartContainer('weeklyGoalChart', 'Cumplimiento de Metas Semanales');
+                      weeklyGoalChartInstance = createCompletionChart(
+                          'weeklyGoalChart',
+                          ['Metas Semanales'],
+                          [completedGoals],
+                          [totalGoals]
+                      );
+                       // Contribuir al score
+                       overallScore += (completedGoals / totalGoals) * 100;
+                       scoreFactors++;
+                  }
+             }
+
+              // 4. Gráfico de Prioridades Semanales Completadas
+              if (hasWeeklyData) {
+                  let totalWeeklyPriorities = 0, completedWeeklyPriorities = 0;
+                   Object.values(data.weekly).forEach(weekData => {
+                       if (weekData.priorities) {
+                           const validPriorities = weekData.priorities.filter(p => p.text && p.text.trim() !== '');
+                           totalWeeklyPriorities += validPriorities.length;
+                           completedWeeklyPriorities += validPriorities.filter(p => p.completed).length;
+                       }
+                   });
+
+                   if (totalWeeklyPriorities > 0) {
+                       createChartContainer('weeklyPriorityChart', 'Cumplimiento de Prioridades Semanales');
+                       weeklyPriorityChartInstance = createCompletionChart(
+                           'weeklyPriorityChart',
+                           ['Prioridades Semanales'],
+                           [completedWeeklyPriorities],
+                           [totalWeeklyPriorities]
+                       );
+                        // Contribuir al score
+                        overallScore += (completedWeeklyPriorities / totalWeeklyPriorities) * 100;
+                        scoreFactors++;
+                   }
+              }
+
+
+            // Calcular y mostrar resumen de rendimiento
+            displayPerformanceSummary(overallScore, scoreFactors);
+
+            // Añadir el contenedor del resumen al final
+            statsContent.appendChild(performanceContainer);
+        }
+
+
+         // Crea el HTML para un contenedor de gráfico
+         function createChartContainer(canvasId, title) {
+              const container = document.createElement('div');
+              container.classList.add('chart-container');
+
+              const titleElement = document.createElement('h3');
+              titleElement.classList.add('chart-title');
+              titleElement.textContent = title;
+
+              const wrapper = document.createElement('div');
+              wrapper.classList.add('chart-wrapper');
+              const canvas = document.createElement('canvas');
+              canvas.id = canvasId;
+              wrapper.appendChild(canvas);
+
+              container.appendChild(titleElement);
+              container.appendChild(wrapper);
+
+              statsContent.appendChild(container); // Añadir al DOM
+         }
+
+
+        // Crea gráfico de barras horizontales para estados de ánimo
+        function createMoodChart(moodCounts) {
+             const ctx = document.getElementById('moodChart')?.getContext('2d');
+             if (!ctx) return null;
+
+             const labels = ['Feliz 😊', 'Contento 🙂', 'Neutral 😐', 'Triste 😟', 'Enojado 😠'];
+             const dataValues = [
+                 moodCounts.feliz, moodCounts.contento, moodCounts.neutral,
+                 moodCounts.triste, moodCounts.enojado
+             ];
+             const backgroundColors = [
+                  getComputedStyle(document.documentElement).getPropertyValue('--chart-mood-feliz').trim(),
+                  getComputedStyle(document.documentElement).getPropertyValue('--chart-mood-contento').trim(),
+                  getComputedStyle(document.documentElement).getPropertyValue('--chart-mood-neutral').trim(),
+                  getComputedStyle(document.documentElement).getPropertyValue('--chart-mood-triste').trim(),
+                  getComputedStyle(document.documentElement).getPropertyValue('--chart-mood-enojado').trim(),
+             ];
+
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Número de Días',
+                        data: dataValues,
+                        backgroundColor: backgroundColors,
+                        borderColor: backgroundColors, // O un color de borde más oscuro
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y', // Barras horizontales
+                    responsive: true,
+                    maintainAspectRatio: false, // Permite ajustar altura
+                    scales: {
+                         x: { // Eje horizontal (valores)
+                             beginAtZero: true,
+                              ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() },
+                              grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim() }
+                         },
+                         y: { // Eje vertical (etiquetas)
+                              ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() },
+                              grid: { display: false } // Ocultar rejilla vertical
+                         }
+                     },
+                    plugins: {
+                        legend: { display: false }, // Ocultar leyenda si solo hay un dataset
+                        tooltip: {
+                             callbacks: {
+                                 label: function(context) {
+                                     let label = context.dataset.label || '';
+                                     if (label) { label += ': '; }
+                                     if (context.parsed.x !== null) {
+                                         label += context.parsed.x + ' días';
+                                     }
+                                     return label;
+                                 }
+                             }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Crea gráfico de barras horizontales para completado vs total
+         function createCompletionChart(canvasId, labels, completedData, totalData) {
+             const ctx = document.getElementById(canvasId)?.getContext('2d');
+             if (!ctx) return null;
+
+              const completedColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-completed').trim();
+              const pendingColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-pending').trim(); // Color para la parte no completada
+
+              const percentages = completedData.map((comp, index) => totalData[index] > 0 ? Math.round((comp / totalData[index]) * 100) : 0);
+
+             return new Chart(ctx, {
+                 type: 'bar',
+                 data: {
+                     labels: labels,
+                     datasets: [{
+                         label: '% Completado',
+                         data: percentages, // Mostrar porcentaje
+                         backgroundColor: completedColor,
+                         borderColor: completedColor,
+                         borderWidth: 1
+                     }]
+                 },
+                 options: {
+                     indexAxis: 'y', // Barras horizontales
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     scales: {
+                         x: {
+                             beginAtZero: true,
+                             max: 100, // Eje X va de 0 a 100%
+                             ticks: {
+                                  callback: function(value) { return value + "%" }, // Añadir %
+                                  color: getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim()
+                             },
+                              grid: { color: getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim() }
+                         },
+                          y: {
+                              ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim() },
+                              grid: { display: false }
+                         }
+                     },
+                     plugins: {
+                         legend: { display: false },
+                         tooltip: {
+                             callbacks: {
+                                 label: function(context) {
+                                     const index = context.dataIndex;
+                                      const total = totalData[index];
+                                      const completed = completedData[index];
+                                      const percentage = context.parsed.x;
+                                      return `${context.label}: ${percentage}% (${completed}/${total})`;
+                                 }
+                             }
+                         }
+                     }
+                 }
+             });
+         }
+
+
+        // Muestra el resumen de rendimiento general
+        function displayPerformanceSummary(totalScore, factorCount) {
+            performanceContainer.innerHTML = ''; // Limpiar
+
+            if (factorCount === 0) {
+                 performanceContainer.innerHTML = '<p class="no-data-message">No hay datos suficientes para calcular el rendimiento.</p>';
+                return;
+            }
+
+            const averageScore = totalScore / factorCount;
+            const summaryDiv = document.createElement('div');
+            summaryDiv.classList.add('performance-summary');
+
+            let performanceLevel = '';
+            let summaryText = '';
+
+            if (averageScore >= 75) {
+                summaryDiv.classList.add('high');
+                performanceLevel = 'ALTO';
+                summaryText = `¡Excelente! Tu rendimiento general (${averageScore.toFixed(0)}%) en el periodo ha sido ${performanceLevel}. ¡Sigue así!`;
+            } else if (averageScore >= 50) {
+                summaryDiv.classList.add('medium');
+                performanceLevel = 'MEDIO';
+                 summaryText = `Tu rendimiento general (${averageScore.toFixed(0)}%) en el periodo ha sido ${performanceLevel}. ¡Hay espacio para mejorar!`;
+            } else {
+                summaryDiv.classList.add('low');
+                performanceLevel = 'BAJO';
+                summaryText = `Tu rendimiento general (${averageScore.toFixed(0)}%) en el periodo ha sido ${performanceLevel}. ¡Revisa tus prioridades y planifica!`;
+            }
+
+            summaryDiv.textContent = summaryText;
+            performanceContainer.appendChild(summaryDiv);
+        }
+
+        // Destruye instancias de gráficos existentes para evitar conflictos
+        function destroyCharts() {
+             if (moodChartInstance) moodChartInstance.destroy();
+             if (dailyCompletionChartInstance) dailyCompletionChartInstance.destroy();
+             if (weeklyGoalChartInstance) weeklyGoalChartInstance.destroy();
+             if (weeklyPriorityChartInstance) weeklyPriorityChartInstance.destroy();
+             moodChartInstance = null;
+             dailyCompletionChartInstance = null;
+             weeklyGoalChartInstance = null;
+             weeklyPriorityChartInstance = null;
+        }
+
+
+        // --- Gestión del Tema ---
+        function applyTheme(theme) {
+            if (theme === 'dark') { document.body.classList.add('dark-mode'); }
+            else { document.body.classList.remove('dark-mode'); }
+            // Si los gráficos ya existen, actualizarlos para que recojan los nuevos colores CSS
+             if (Chart.instances) {
+                 Object.values(Chart.instances).forEach(chart => {
+                    // Actualizar colores de ticks y grid (puede requerir más lógica si los colores del dataset se basan en CSS vars)
+                     const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-color').trim();
+                     const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim();
+                     if(chart.options.scales.x) {
+                        chart.options.scales.x.ticks.color = textColor;
+                        chart.options.scales.x.grid.color = borderColor;
+                     }
+                     if(chart.options.scales.y) {
+                         chart.options.scales.y.ticks.color = textColor;
+                         chart.options.scales.y.grid.color = borderColor;
+                     }
+                     // Forzar re-renderizado
+                    chart.update();
+                 });
+             }
+        }
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            applyTheme(savedTheme);
+        }
+
+    });
+    </script>
+
+</body>
+</html>

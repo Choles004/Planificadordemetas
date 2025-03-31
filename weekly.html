@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metas de la Semana</title>
+    <style>
+        /* --- Estilos CSS (Reutilizados y Adaptados de daily.html) --- */
+        :root {
+            --bg-color: #F8F7F3;
+            --text-color: #333;
+            --primary-accent: #EAD7F0;
+            --secondary-accent: #C8A2C8;
+            --border-color: #DDD;
+            --placeholder-color: #999;
+            --card-bg: #FFFFFF;
+            --completed-color: #A8D5BA; /* Verde claro */
+            --hover-bg: #EFEFEF;
+            --icon-color: #555;
+            --icon-active-color: #8A2BE2; /* Violeta */
+        }
+
+        body.dark-mode {
+            --bg-color: #2C2C2C;
+            --text-color: #E0E0E0;
+            --primary-accent: #4A3F5E;
+            --secondary-accent: #7A6A9B;
+            --border-color: #555;
+            --placeholder-color: #888;
+            --card-bg: #3B3B3B;
+            --completed-color: #4A7C59; /* Verde oscuro */
+            --hover-bg: #4F4F4F;
+            --icon-color: #BBB;
+            --icon-active-color: #C8A2C8;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+            padding: 15px;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+        body.dark-mode .app-container {
+            box-shadow: 0 2px 10px rgba(255, 255, 255, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .main-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: var(--secondary-accent);
+        }
+
+        .week-selector { /* Adaptado de date-selector */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: var(--primary-accent);
+            padding: 8px 15px;
+            border-radius: 20px;
+        }
+        .week-selector button {
+            background: none; border: none; font-size: 1.2em;
+            cursor: pointer; color: var(--icon-color); padding: 5px;
+        }
+        .week-selector button:hover { color: var(--icon-active-color); }
+        #current-week {
+            font-weight: bold; min-width: 180px; text-align: center; font-size: 0.9em;
+        }
+
+        /* --- Layout Específico Semanal --- */
+        .main-content-weekly {
+            display: grid;
+            /* Dos columnas: metas diarias a la izquierda, prioridades/frase/etc a la derecha */
+            grid-template-columns: 1.5fr 1fr; /* Ajusta proporción si es necesario */
+            gap: 30px;
+        }
+
+        .daily-goals-section {
+             /* Ocupa la primera columna */
+             display: grid;
+             /* Dos columnas de días para ahorrar espacio vertical */
+             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+             gap: 20px;
+        }
+
+        .right-column {
+            /* Ocupa la segunda columna */
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Espacio entre prioridades, frase, motivación */
+        }
+
+        .section { margin-bottom: 0; /* Removido margen inferior, gestionado por gap del grid/flex */ }
+
+        .section-title {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-accent);
+            padding-bottom: 5px;
+        }
+
+        /* Metas Diarias */
+        .day-goals { margin-bottom: 15px; /* Espacio entre días */}
+        .day-title { font-weight: bold; margin-bottom: 10px; text-transform: uppercase; font-size: 1.1em; color: var(--secondary-accent); }
+        .day-goals ul { list-style: none; }
+        .goal-item {
+            display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+        }
+        .goal-item input[type="checkbox"] { flex-shrink: 0; cursor: pointer; }
+        .goal-item input[type="text"] {
+            flex-grow: 1; border: none; background: transparent;
+            border-bottom: 1px dashed var(--border-color);
+            color: var(--text-color); padding: 5px; font-size: 0.95em;
+        }
+        .goal-item input[type="text"]:focus { outline: none; border-bottom-style: solid; }
+        .goal-item.completed input[type="text"] { text-decoration: line-through; opacity: 0.7; }
+
+
+        /* Prioridades Semanales (Similar a diarias) */
+        .weekly-priorities ul { list-style: none; }
+        .priority-item {
+            display: flex; align-items: center; padding: 8px 5px;
+            margin-bottom: 8px; border-radius: 4px;
+            transition: background-color 0.3s; gap: 10px;
+        }
+        .priority-item.completed { background-color: var(--completed-color); }
+        .priority-item.completed .list-input { text-decoration: line-through; opacity: 0.7; }
+        .list-input { /* Para Prioridades */
+            flex-grow: 1; border: none; background: transparent;
+            border-bottom: 1px dashed var(--border-color);
+            color: var(--text-color); padding: 5px; font-size: 1em;
+        }
+        .list-input:focus { outline: none; border-bottom-style: solid; }
+        .list-checkbox { cursor: pointer; }
+
+        .add-button { /* Botón añadir prioridad */
+            padding: 8px 15px; border: none;
+            background-color: var(--secondary-accent);
+            color: var(--bg-color); border-radius: 4px; cursor: pointer;
+            transition: background-color 0.2s; margin-top: 10px;
+        }
+        .add-button:hover { background-color: var(--icon-active-color); }
+        body.dark-mode .add-button { color: var(--text-color); }
+
+
+        /* Frase y Motivación (Similar a Notas) */
+        .text-section { /* Contenedor para frase o motivación */
+            background-color: var(--primary-accent); padding: 15px; border-radius: 8px;
+        }
+        .text-section textarea {
+            width: 100%; min-height: 60px; /* Menos altura que notas diarias */
+            border: 1px solid var(--secondary-accent); border-radius: 4px;
+            padding: 10px; font-family: inherit; font-size: 1em;
+            background-color: var(--card-bg); color: var(--text-color);
+            resize: vertical;
+        }
+        .text-section textarea:focus { outline: none; border-color: var(--icon-active-color); }
+        .text-title { /* Título dentro de la sección */
+            font-size: 1.2em; font-weight: 600; margin-bottom: 10px;
+            color: var(--icon-color);
+        }
+         body.dark-mode .text-title { color: var(--text-color); }
+
+        /* Navegación */
+        nav {
+            margin-top: 30px; padding-top: 20px;
+            border-top: 1px solid var(--border-color); text-align: center;
+        }
+        nav a {
+            margin: 0 15px; color: var(--secondary-accent);
+            text-decoration: none; font-weight: 500;
+        }
+        nav a:hover { text-decoration: underline; }
+
+        /* Responsividad */
+        @media (max-width: 992px) { /* Punto de quiebre para tableta/móvil grande */
+            .main-content-weekly {
+                grid-template-columns: 1fr; /* Apila las columnas */
+            }
+             .daily-goals-section {
+                /* Mantiene 2 columnas si caben, o 1 si no */
+                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+             }
+        }
+        @media (max-width: 768px) {
+             .main-title { font-size: 2em; }
+             header { flex-direction: column; align-items: flex-start; }
+              .daily-goals-section {
+                 grid-template-columns: 1fr; /* Fuerza una columna de días en móvil */
+              }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1 class="main-title">Metas de la semana</h1>
+            <div class="week-selector">
+                <button id="prev-week" title="Semana anterior">&lt;</button>
+                <span id="current-week"></span>
+                <button id="next-week" title="Semana siguiente">&gt;</button>
+            </div>
+        </header>
+
+        <nav>
+             <a href="daily.html">Diario</a>
+             <a href="#">Semanal</a> <!-- Deshabilitado o activo -->
+             <a href="stats.html">Análisis</a>
+             <a href="settings.html">Configuración</a>
+         </nav>
+
+        <main class="main-content-weekly">
+            <section class="daily-goals-section">
+                <!-- Las metas diarias se generarán con JS aquí -->
+                <div class="day-goals" data-day="Lunes">
+                    <h3 class="day-title">Lunes</h3>
+                    <ul class="goals-list"></ul>
+                </div>
+                <div class="day-goals" data-day="Martes">
+                    <h3 class="day-title">Martes</h3>
+                    <ul class="goals-list"></ul>
+                </div>
+                 <div class="day-goals" data-day="Miércoles">
+                    <h3 class="day-title">Miércoles</h3>
+                    <ul class="goals-list"></ul>
+                </div>
+                 <div class="day-goals" data-day="Jueves">
+                    <h3 class="day-title">Jueves</h3>
+                    <ul class="goals-list"></ul>
+                </div>
+                 <div class="day-goals" data-day="Viernes">
+                    <h3 class="day-title">Viernes</h3>
+                    <ul class="goals-list"></ul>
+                </div>
+                 <div class="day-goals" data-day="Sábado">
+                    <h3 class="day-title">Sábado</h3>
+                    <ul class="goals-list"></ul>
+                </div>
+                 <div class="day-goals" data-day="Domingo">
+                    <h3 class="day-title">Domingo</h3>
+                    <ul class="goals-list"></ul>
+                </div>
+            </section>
+
+            <aside class="right-column">
+                <section class="section weekly-priorities">
+                    <h2 class="section-title">PRIORIDADES</h2>
+                    <ul id="weekly-priority-list">
+                        <!-- Las prioridades semanales se generarán/cargarán aquí -->
+                    </ul>
+                    <button id="add-weekly-priority" class="add-button">+ Añadir Prioridad</button>
+                </section>
+
+                <section class="section text-section">
+                    <h2 class="text-title">FRASE DE LA SEMANA</h2>
+                    <textarea id="weekly-phrase" placeholder="Escribe tu frase inspiradora..."></textarea>
+                </section>
+
+                <section class="section text-section">
+                    <h2 class="text-title">MOTIVACIÓN DE LA SEMANA</h2>
+                    <textarea id="weekly-motivation" placeholder="¿Qué te motiva esta semana?"></textarea>
+                </section>
+            </aside>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentWeekElement = document.getElementById('current-week');
+            const prevWeekButton = document.getElementById('prev-week');
+            const nextWeekButton = document.getElementById('next-week');
+            const dailyGoalsSections = document.querySelectorAll('.day-goals');
+            const weeklyPriorityList = document.getElementById('weekly-priority-list');
+            const addWeeklyPriorityButton = document.getElementById('add-weekly-priority');
+            const weeklyPhraseArea = document.getElementById('weekly-phrase');
+            const weeklyMotivationArea = document.getElementById('weekly-motivation');
+
+            const GOALS_PER_DAY = 4; // Número de metas por día
+            const DEFAULT_PRIORITIES = 5; // Número inicial de prioridades
+            const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"]; // Para cálculo
+
+            let currentSelectedWeekStart = getMonday(new Date()); // Inicia con el Lunes de la semana actual
+
+            // --- Inicialización ---
+            generateDailyGoalInputs();
+            loadTheme();
+            displayWeekRange(currentSelectedWeekStart);
+            loadDataForWeek(currentSelectedWeekStart);
+            setupEventListeners();
+
+            // --- Funciones ---
+
+             // Genera los inputs para las metas diarias de todos los días
+             function generateDailyGoalInputs() {
+                 dailyGoalsSections.forEach(section => {
+                     const list = section.querySelector('.goals-list');
+                     const dayName = section.dataset.day;
+                     list.innerHTML = ''; // Limpiar
+                     for (let i = 0; i < GOALS_PER_DAY; i++) {
+                         const li = document.createElement('li');
+                         li.classList.add('goal-item');
+
+                         const checkbox = document.createElement('input');
+                         checkbox.type = 'checkbox';
+                         checkbox.dataset.day = dayName;
+                         checkbox.dataset.index = i;
+
+                         const input = document.createElement('input');
+                         input.type = 'text';
+                         input.placeholder = `Meta ${i + 1}...`;
+                         input.dataset.day = dayName;
+                         input.dataset.index = i;
+
+                         li.appendChild(checkbox);
+                         li.appendChild(input);
+                         list.appendChild(li);
+                     }
+                 });
+             }
+
+
+             // Obtiene el Lunes de la semana de una fecha dada
+             function getMonday(d) {
+                 d = new Date(d); // Clonar fecha
+                 const day = d.getDay(); // 0 = Domingo, 1 = Lunes, ..., 6 = Sábado
+                 const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Ajuste para Domingo
+                 return new Date(d.setDate(diff));
+             }
+
+             // Obtiene el Domingo de la semana de una fecha dada (basado en el Lunes)
+             function getSunday(mondayDate) {
+                  const sunday = new Date(mondayDate);
+                  sunday.setDate(mondayDate.getDate() + 6);
+                  return sunday;
+             }
+
+            // Muestra el rango de la semana actual
+            function displayWeekRange(startDate) {
+                 const endDate = getSunday(startDate);
+                 const startDay = startDate.getDate();
+                 const startMonth = startDate.toLocaleDateString('es-ES', { month: 'short' });
+                 const endDay = endDate.getDate();
+                 const endMonth = endDate.toLocaleDateString('es-ES', { month: 'short' });
+                 const year = startDate.getFullYear(); // O endDate.getFullYear(), debería ser el mismo para la mayoría de semanas
+
+                 currentWeekElement.textContent = `Semana del ${startDay} ${startMonth} al ${endDay} ${endMonth}, ${year}`;
+             }
+
+            // Cambia la semana mostrada
+            function changeWeek(weeks) {
+                 currentSelectedWeekStart.setDate(currentSelectedWeekStart.getDate() + (weeks * 7));
+                 // No es necesario volver a llamar a getMonday porque sumar/restar 7 días mantiene el Lunes
+                 displayWeekRange(currentSelectedWeekStart);
+                 loadDataForWeek(currentSelectedWeekStart);
+            }
+
+            // Genera la clave para localStorage basada en la semana (YYYY-Www)
+            function getWeekKey(startDate) {
+                 // Calcula el número de semana ISO 8601
+                 const date = new Date(Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()));
+                 date.setUTCDate(date.getUTCDate() + 4 - (date.getUTCDay() || 7)); // Ajustar al Jueves de la semana
+                 const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+                 const weekNo = Math.ceil((((date - yearStart) / 86400000) + 1) / 7);
+                 const year = date.getUTCFullYear();
+                 return `weekly_${year}-W${String(weekNo).padStart(2, '0')}`;
+            }
+
+            // Guarda todos los datos de la semana actual en localStorage
+            function saveData() {
+                 const weekKey = getWeekKey(currentSelectedWeekStart);
+                 const data = {
+                     dailyGoals: {},
+                     priorities: [],
+                     phrase: weeklyPhraseArea.value,
+                     motivation: weeklyMotivationArea.value
+                 };
+
+                 // Guardar metas diarias
+                 dailyGoalsSections.forEach(section => {
+                     const dayName = section.dataset.day;
+                     data.dailyGoals[dayName] = [];
+                     section.querySelectorAll('.goal-item').forEach(item => {
+                         const input = item.querySelector('input[type="text"]');
+                         const checkbox = item.querySelector('input[type="checkbox"]');
+                         data.dailyGoals[dayName].push({
+                             text: input.value,
+                             completed: checkbox.checked
+                         });
+                     });
+                 });
+
+                 // Guardar prioridades semanales
+                 weeklyPriorityList.querySelectorAll('.priority-item').forEach(item => {
+                     const input = item.querySelector('.list-input');
+                     const checkbox = item.querySelector('.list-checkbox');
+                     // Solo guardar si hay texto
+                     if (input.value.trim()) {
+                         data.priorities.push({
+                             text: input.value,
+                             completed: checkbox.checked
+                         });
+                     }
+                 });
+
+                 try {
+                     localStorage.setItem(weekKey, JSON.stringify(data));
+                    // console.log(`Datos guardados para ${weekKey}`);
+                 } catch (e) {
+                     console.error("Error al guardar en localStorage:", e);
+                     alert("No se pudieron guardar los datos semanales. Es posible que el almacenamiento esté lleno.");
+                 }
+            }
+
+            // Carga los datos para la semana dada desde localStorage
+            function loadDataForWeek(startDate) {
+                clearAllWeeklyFields(); // Limpia antes de cargar
+                const weekKey = getWeekKey(startDate);
+                const savedData = localStorage.getItem(weekKey);
+
+                if (savedData) {
+                    try {
+                        const data = JSON.parse(savedData);
+                        // console.log(`Datos cargados para ${weekKey}:`, data);
+
+                         // Cargar metas diarias
+                         if (data.dailyGoals) {
+                             dailyGoalsSections.forEach(section => {
+                                 const dayName = section.dataset.day;
+                                 const goals = data.dailyGoals[dayName] || [];
+                                 section.querySelectorAll('.goal-item').forEach((item, index) => {
+                                     const input = item.querySelector('input[type="text"]');
+                                     const checkbox = item.querySelector('input[type="checkbox"]');
+                                     if (goals[index]) {
+                                         input.value = goals[index].text || '';
+                                         checkbox.checked = goals[index].completed || false;
+                                         updateGoalItemStyle(checkbox);
+                                     } else {
+                                          input.value = '';
+                                          checkbox.checked = false;
+                                          updateGoalItemStyle(checkbox);
+                                     }
+                                 });
+                             });
+                         }
+
+                         // Cargar prioridades semanales
+                         weeklyPriorityList.innerHTML = ''; // Limpiar lista existente
+                         if (data.priorities && data.priorities.length > 0) {
+                              data.priorities.forEach(p => addWeeklyPriority(p.text, p.completed));
+                         } else {
+                             // Añadir prioridades vacías por defecto si no hay guardadas
+                              addDefaultWeeklyPriorities();
+                         }
+
+
+                        // Cargar frase y motivación
+                        weeklyPhraseArea.value = data.phrase || '';
+                        weeklyMotivationArea.value = data.motivation || '';
+
+                    } catch (e) {
+                        console.error(`Error al parsear datos para ${weekKey}:`, e);
+                        addDefaultWeeklyPriorities(); // Estado por defecto en caso de error
+                    }
+                } else {
+                     // Si no hay datos guardados, mostrar estado por defecto
+                     // console.log(`No hay datos para ${weekKey}, mostrando estado vacío.`);
+                     addDefaultWeeklyPriorities();
+                }
+            }
+
+             // Limpia todos los campos de entrada y selecciones de la vista semanal
+             function clearAllWeeklyFields() {
+                 dailyGoalsSections.forEach(section => {
+                     section.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+                     section.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                         cb.checked = false;
+                         updateGoalItemStyle(cb); // Reset style
+                     });
+                 });
+                 weeklyPriorityList.innerHTML = ''; // Se rellenará en loadData o addDefault
+                 weeklyPhraseArea.value = '';
+                 weeklyMotivationArea.value = '';
+                 updateAllPriorityStyles(); // Quitar estilos de completado
+             }
+
+
+             // Añade prioridades por defecto si la lista está vacía
+             function addDefaultWeeklyPriorities() {
+                  if (weeklyPriorityList.children.length === 0) {
+                     for (let i = 0; i < DEFAULT_PRIORITIES; i++) {
+                         addWeeklyPriority('', false);
+                     }
+                  }
+             }
+
+
+            // Añade un elemento de prioridad semanal a la lista
+            function addWeeklyPriority(text = '', completed = false) {
+                 const li = document.createElement('li');
+                 li.classList.add('priority-item');
+
+                 const checkbox = document.createElement('input');
+                 checkbox.type = 'checkbox';
+                 checkbox.classList.add('list-checkbox');
+                 checkbox.checked = completed;
+
+                 const input = document.createElement('input');
+                 input.type = 'text';
+                 input.classList.add('list-input');
+                 input.placeholder = `Prioridad ${weeklyPriorityList.children.length + 1}`;
+                 input.value = text;
+
+                 li.appendChild(checkbox);
+                 li.appendChild(input);
+                 weeklyPriorityList.appendChild(li);
+
+                 updateWeeklyPriorityItemStyle(checkbox); // Aplicar estilo inicial
+
+                 // Añadir listeners a los nuevos elementos
+                 input.addEventListener('input', saveData);
+                 checkbox.addEventListener('change', () => {
+                     updateWeeklyPriorityItemStyle(checkbox);
+                     saveData();
+                 });
+             }
+
+             // Actualiza el estilo de un item de meta diaria
+             function updateGoalItemStyle(checkbox) {
+                 const listItem = checkbox.closest('.goal-item');
+                 if (checkbox.checked) {
+                     listItem.classList.add('completed');
+                 } else {
+                     listItem.classList.remove('completed');
+                 }
+             }
+
+             // Actualiza el estilo de un item de prioridad semanal
+             function updateWeeklyPriorityItemStyle(checkbox) {
+                 const listItem = checkbox.closest('.priority-item');
+                 if (checkbox.checked) {
+                     listItem.classList.add('completed');
+                 } else {
+                     listItem.classList.remove('completed');
+                 }
+             }
+
+             // Quita estilos de completado de todas las prioridades (al cambiar semana)
+             function updateAllPriorityStyles() {
+                  weeklyPriorityList.querySelectorAll('.priority-item').forEach(item => {
+                      item.classList.remove('completed');
+                  });
+              }
+
+            // Configura todos los event listeners iniciales
+            function setupEventListeners() {
+                 prevWeekButton.addEventListener('click', () => changeWeek(-1));
+                 nextWeekButton.addEventListener('click', () => changeWeek(1));
+
+                 // Listeners para Metas Diarias (delegación)
+                 const goalsContainer = document.querySelector('.daily-goals-section');
+                 goalsContainer.addEventListener('input', (event) => {
+                     if (event.target.matches('.goal-item input[type="text"]')) {
+                         saveData();
+                     }
+                 });
+                 goalsContainer.addEventListener('change', (event) => {
+                     if (event.target.matches('.goal-item input[type="checkbox"]')) {
+                         updateGoalItemStyle(event.target);
+                         saveData();
+                     }
+                 });
+
+                 // Listeners para Prioridades Semanales (delegación + botón añadir)
+                  weeklyPriorityList.addEventListener('input', (event) => {
+                      if (event.target.classList.contains('list-input')) {
+                          saveData();
+                      }
+                  });
+                  weeklyPriorityList.addEventListener('change', (event) => {
+                      if (event.target.classList.contains('list-checkbox')) {
+                          updateWeeklyPriorityItemStyle(event.target);
+                          saveData();
+                      }
+                  });
+                 addWeeklyPriorityButton.addEventListener('click', () => addWeeklyPriority());
+
+                 // Listeners para Frase y Motivación
+                 weeklyPhraseArea.addEventListener('input', saveData);
+                 weeklyMotivationArea.addEventListener('input', saveData);
+            }
+
+            // --- Gestión del Tema (Idéntico a daily.html) ---
+            function applyTheme(theme) {
+                if (theme === 'dark') { document.body.classList.add('dark-mode'); }
+                else { document.body.classList.remove('dark-mode'); }
+            }
+            function loadTheme() {
+                const savedTheme = localStorage.getItem('theme') || 'light';
+                applyTheme(savedTheme);
+            }
+
+        });
+    </script>
+
+</body>
+</html>
